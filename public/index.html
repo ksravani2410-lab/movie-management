@@ -1,0 +1,313 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CineVault | Movie Management</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #090914;
+            color: white;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 22px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #111120;
+            border-bottom: 1px solid #292943;
+        }
+
+        header h2 {
+            color: #b58cff;
+            letter-spacing: 2px;
+        }
+
+        header span {
+            color: #aaa;
+        }
+
+        .hero {
+            text-align: center;
+            padding: 55px 20px 35px;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
+
+        .hero h1 span {
+            color: #b58cff;
+        }
+
+        .hero p {
+            color: #aaa;
+        }
+
+        .container {
+            width: 85%;
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .form-box {
+            background: #151527;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid #34304d;
+            margin-bottom: 35px;
+        }
+
+        .form-box h2 {
+            margin-bottom: 20px;
+            color: #c7a5ff;
+        }
+
+        .inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        input {
+            padding: 14px;
+            border: 1px solid #393952;
+            border-radius: 8px;
+            background: #0d0d1b;
+            color: white;
+            outline: none;
+            width: 100%;
+        }
+
+        input:focus {
+            border-color: #b58cff;
+        }
+
+        button {
+            padding: 13px 20px;
+            border: none;
+            border-radius: 8px;
+            background: #9b65ed;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+
+        button:hover {
+            background: #7744c7;
+        }
+
+        .search {
+            margin: 25px 0;
+        }
+
+        .section-title {
+            margin: 25px 0;
+            font-size: 25px;
+        }
+
+        #result {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            padding-bottom: 50px;
+        }
+
+        .movie-card {
+            background: #17172b;
+            padding: 22px;
+            border-radius: 14px;
+            border: 1px solid #34304d;
+            transition: 0.3s;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-6px);
+            border-color: #b58cff;
+        }
+
+        .movie-icon {
+            font-size: 38px;
+            margin-bottom: 15px;
+        }
+
+        .movie-card h3 {
+            color: #d4b8ff;
+            margin-bottom: 12px;
+        }
+
+        .movie-card p {
+            color: #aaa;
+            margin: 7px 0;
+        }
+
+        .delete-btn {
+            background: #d94b65;
+        }
+
+        .delete-btn:hover {
+            background: #ad3048;
+        }
+
+        footer {
+            text-align: center;
+            padding: 22px;
+            background: #111120;
+            color: #888;
+        }
+
+        @media(max-width: 650px) {
+            .inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .hero h1 {
+                font-size: 30px;
+            }
+
+            .container {
+                width: 92%;
+            }
+
+            header {
+                padding: 20px 5%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h2>🎬 CineVault</h2>
+    <span>Movie Management System</span>
+</header>
+
+<section class="hero">
+    <h1>Your Movies. <span>Your Collection.</span></h1>
+    <p>Manage, explore and organize your favorite movies.</p>
+</section>
+
+<div class="container">
+
+    <div class="form-box">
+        <h2>➕ Add New Movie</h2>
+
+        <div class="inputs">
+            <input id="title" placeholder="Enter Movie Name">
+            <input id="genre" placeholder="Enter Genre">
+            <input id="year" type="number" placeholder="Release Year">
+        </div>
+
+        <button onclick="addMovie()">Add Movie</button>
+    </div>
+
+    <h2 class="section-title">🔍 Explore Your Collection</h2>
+
+    <input class="search" id="search"
+           placeholder="Search movies by name..."
+           oninput="viewMovies()">
+
+    <h2 class="section-title">🎞️ Movie Collection</h2>
+
+    <div id="result"></div>
+
+</div>
+
+<footer>
+    © 2026 CineVault | Movie Management System
+</footer>
+
+<script>
+
+async function addMovie() {
+    let title = document.getElementById("title").value.trim();
+    let genre = document.getElementById("genre").value.trim();
+    let year = document.getElementById("year").value;
+
+    if (!title || !genre || !year) {
+        alert("Please fill all details!");
+        return;
+    }
+
+    let response = await fetch("/add", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            title: title,
+            genre: genre,
+            year: Number(year)
+        })
+    });
+
+    if (!response.ok) {
+        alert("Could not add movie.");
+        return;
+    }
+
+    document.getElementById("title").value = "";
+    document.getElementById("genre").value = "";
+    document.getElementById("year").value = "";
+
+    alert("Movie Added Successfully!");
+    viewMovies();
+}
+
+async function viewMovies() {
+    let response = await fetch("/movies");
+    let movies = await response.json();
+
+    let search = document.getElementById("search").value.toLowerCase();
+
+    movies = movies.filter(movie =>
+        movie.title.toLowerCase().includes(search)
+    );
+
+    let result = document.getElementById("result");
+
+    if (movies.length === 0) {
+        result.innerHTML = "<p>No movies found. Add your first movie!</p>";
+        return;
+    }
+
+    result.innerHTML = movies.map(movie => `
+        <div class="movie-card">
+            <div class="movie-icon">🎬</div>
+            <h3>${movie.title}</h3>
+            <p>🎭 Genre: ${movie.genre}</p>
+            <p>📅 Year: ${movie.year}</p>
+            <button class="delete-btn"
+                onclick="deleteMovie('${movie._id}')">
+                Delete Movie
+            </button>
+        </div>
+    `).join("");
+}
+
+async function deleteMovie(id) {
+    if (!confirm("Do you want to delete this movie?")) return;
+
+    await fetch("/delete/" + id, {
+        method: "DELETE"
+    });
+
+    viewMovies();
+}
+
+viewMovies();
+
+</script>
+
+</body>
+</html>
